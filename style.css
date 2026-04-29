@@ -1,0 +1,750 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@400;600;700&display=swap');
+
+  :root {
+    --bg: #f4f3ef;
+    --panel: #ffffff;
+    --border: #c8c4b8;
+    --border-light: #e2dfd8;
+    --text: #1a1814;
+    --text-sub: #6b6760;
+    --accent: #1a3a6b;
+    --accent2: #c0392b;
+    --btn-bg: #1a3a6b;
+    --btn-text: #fff;
+    --tab-active: #1a3a6b;
+    --tab-inactive: #e8e5e0;
+    --red: #c0392b;
+    --shadow: 0 2px 16px rgba(0,0,0,.10);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── 상단 툴바 ── */
+  .toolbar {
+    background: #0d0d0d;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 0 rgba(255,255,255,.06), 0 4px 16px rgba(0,0,0,.5);
+    border-bottom: 1px solid #222;
+  }
+  .toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .toolbar-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px; height: 30px;
+    background: #fff;
+    border-radius: 6px;
+  }
+  .toolbar-divider {
+    width: 1px; height: 18px;
+    background: #333;
+    margin: 0 4px;
+  }
+  .toolbar-sub {
+    font-size: 11px;
+    font-weight: 400;
+    color: #555;
+    letter-spacing: .04em;
+    text-transform: none;
+  }
+  .toolbar-right { display: flex; align-items: center; gap: 6px; }
+
+  /* 법인 드롭다운 */
+  .toolbar-select {
+    padding: 6px 28px 6px 12px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 11.5px;
+    font-weight: 600;
+    border: 1px solid #2e2e2e;
+    border-radius: 5px;
+    background: #1a1a1a;
+    color: #ccc;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%226%22><path d=%22M0 0l5 6 5-6z%22 fill=%22%23666%22/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    letter-spacing: .03em;
+    transition: border-color .15s, color .15s;
+  }
+  .toolbar-select:hover { border-color: #444; color: #fff; }
+  .toolbar-select option { background: #1a1a1a; color: #ccc; }
+
+  /* 레이아웃 토글 */
+  .layout-toggle {
+    display: flex;
+    background: #1a1a1a;
+    border: 1px solid #2e2e2e;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .layout-toggle button {
+    padding: 6px 14px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 11.5px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+    color: #555;
+    background: transparent;
+    letter-spacing: .03em;
+  }
+  .layout-toggle button.active {
+    background: #fff;
+    color: #0d0d0d;
+  }
+  .layout-toggle button:not(.active):hover { color: #aaa; }
+
+  /* 액션 버튼 공통 */
+  .btn {
+    padding: 7px 14px;
+    border-radius: 5px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 11.5px;
+    font-weight: 700;
+    border: 1px solid transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: opacity .15s, transform .1s;
+    letter-spacing: .02em;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn:hover { opacity: .85; }
+  .btn-reset {
+    background: #1a1a1a;
+    color: #666;
+    border-color: #2e2e2e;
+  }
+  .btn-reset:hover { color: #aaa !important; opacity: 1; }
+  .btn-pdf {
+    background: #c0392b;
+    color: #fff;
+    border-color: #a93226;
+  }
+  .btn-excel {
+    background: #1d6f42;
+    color: #fff;
+    border-color: #175a35;
+  }
+  /* 구분선 */
+  .toolbar-sep {
+    width: 1px; height: 20px;
+    background: #222;
+    margin: 0 2px;
+  }
+
+  /* ── 메인 레이아웃 ── */
+  .main {
+    width: 870px;          /* 210mm(793px) + 버튼 공간 77px */
+    margin: 24px auto;
+    padding: 0 0 40px 0;
+    position: relative;
+    box-sizing: border-box;
+  }
+  .doc-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-left: 77px;     /* 버튼 공간 */
+    width: 210mm;
+  }
+
+  /* ── 견적서 카드 ── */
+  .doc {
+    background: transparent;
+    font-size: 13px;
+  }
+
+  /* ── 헤더 영역 ── */
+  /* 타입A: 브랜드 중앙 + 정보 우측 (1번·3번 스타일) */
+  .header-a { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  .header-a .left-info { padding-top: 8px; }
+  .header-a .right-box { border: 1.5px solid var(--border); }
+
+  /* 타입B: 로고 우측 상단 (2번 스타일) */
+  .header-b { margin-bottom: 24px; }
+  .header-b .brand-row { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+  .header-b .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  .brand {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'Noto Serif KR', serif;
+    font-weight: 700; font-size: 17px; color: var(--accent);
+  }
+  .brand .logo-circle {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 2px solid var(--accent); display: flex; align-items: center;
+    justify-content: center; font-size: 10px; font-weight: 900;
+    font-style: italic; color: var(--accent); flex-shrink: 0;
+  }
+
+  /* 회사 정보 테이블 */
+  .info-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .info-tbl td {
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    vertical-align: middle;
+    line-height: 1.4;
+  }
+  .info-tbl td.lbl {
+    background: #f7f6f3; font-weight: 600; white-space: nowrap;
+    color: var(--text-sub); width: 72px; text-align: center;
+  }
+  .info-tbl td.lbl-vert {
+    background: #f7f6f3; font-weight: 600; text-align: center;
+    color: var(--text-sub); writing-mode: vertical-rl;
+    width: 24px; letter-spacing: .12em;
+  }
+
+  /* 견적서 제목 */
+  .doc-title {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 900;
+    font-size: 36px; font-weight: 700;
+    letter-spacing: .18em; text-align: center;
+    margin-bottom: 18px; color: var(--text);
+  }
+  .doc-title.small { font-size: 28px; }
+
+  .doc-no {
+    text-align: right; font-size: 11px; color: var(--text-sub);
+    margin-bottom: 6px; letter-spacing: .03em;
+  }
+
+  /* 발주처 / 수신 */
+  .client-row {
+    display: flex; align-items: flex-end; gap: 0;
+    margin-bottom: 4px;
+  }
+  .client-name {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 18px; font-weight: 700;
+  }
+  .client-suffix { font-size: 14px; margin-left: 6px; font-weight: 500; color: var(--text-sub); }
+  .date-line { font-size: 12px; color: var(--text-sub); margin-bottom: 10px; }
+  .contact-line { font-size: 11.5px; color: var(--text-sub); line-height: 1.7; }
+
+  /* ── 사업명 ── */
+  .project-row {
+    border: 1px solid var(--border);
+    padding: 8px 14px; margin-bottom: 18px;
+    font-size: 13px; font-weight: 500;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .project-row .pj-label { color: var(--text-sub); font-weight: 700; white-space: nowrap; }
+  .project-row input {
+    border: none; outline: none; font-family: inherit;
+    font-size: 13px; font-weight: 500; width: 100%; background: transparent;
+  }
+
+  /* ── 품목 테이블 ── */
+  .item-tbl { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+  .item-tbl th, .item-tbl td {
+    border: 1px solid var(--border);
+    padding: 6px 8px;
+    text-align: center;
+    font-size: 12px;
+    vertical-align: middle;
+  }
+  .item-tbl th {
+    background: #f0ede8; font-weight: 700; font-size: 12px;
+  }
+  .item-tbl td.name-cell { text-align: left; }
+  .item-tbl td.sub-cell { text-align: left; padding-left: 20px; color: var(--text-sub); font-size: 11.5px; }
+  .item-tbl td input, .item-tbl td textarea {
+    border: none; outline: none; font-family: inherit; font-size: 12px;
+    width: 100%; background: transparent; text-align: center;
+    resize: none; overflow: hidden;
+  }
+  .item-tbl td input.left { text-align: left; }
+  .item-tbl td input.right { text-align: right; }
+  
+  /* Type B 전용 하단 요약 행 스타일 */
+  .summary-row { background: #f9f9f9; }
+  .summary-row .row-name { font-weight: 700 !important; color: #333 !important; }
+  .summary-row .row-amount { font-weight: 700 !important; color: #d32f2f !important; }
+  .summary-row .row-note { font-size: 11px !important; color: #666 !important; }
+  
+  .row-no { text-align: center !important; font-weight: 500; color: #888; }
+  .item-tbl .total-row td { background: #f0ede8; font-weight: 700; font-size: 12.5px; }
+  .item-tbl .sum-row td { font-size: 12px; }
+  .item-tbl .note-cell { text-align: left; }
+
+  /* ── 금액 섹션 ── */
+  .amount-section {
+    border-collapse: collapse; width: 100%;
+  }
+  .amount-section td {
+    border: 1px solid var(--border);
+    padding: 7px 14px;
+    font-size: 12.5px;
+  }
+  .amount-section .amt-label {
+    text-align: center; font-weight: 700; background: #f0ede8;
+    width: 160px;
+  }
+  .amount-section .amt-value { text-align: right; font-weight: 500; }
+  .amount-section .amt-note { font-size: 11px; color: var(--text-sub); }
+  .amount-section .final-row td { font-size: 13.5px; font-weight: 700; }
+
+  /* ── 비고 ── */
+  .memo-section { margin-top: 20px; }
+  .memo-section .memo-title { font-weight: 700; margin-bottom: 8px; font-size: 13px; }
+  .memo-section textarea {
+    width: 100%; border: 1px solid var(--border-light);
+    padding: 10px 12px; font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px; line-height: 1.8; resize: vertical;
+    outline: none; background: #fafaf8; min-height: 120px;
+    color: var(--text);
+  }
+  .memo-section textarea:focus { border-color: var(--accent); }
+
+  /* ── 하단 정보 ── */
+  .footer-info {
+    margin-top: 20px; display: flex; gap: 0;
+    border: 1px solid var(--border); font-size: 12px;
+  }
+  .footer-info .fi-cell {
+    padding: 7px 14px; border-right: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px; flex: 1;
+  }
+  .footer-info .fi-cell:last-child { border-right: none; }
+  .footer-info .fi-label { font-weight: 700; white-space: nowrap; color: var(--text-sub); }
+  .footer-info .fi-val { font-weight: 500; }
+
+  /* ── 편집용 인풋 하이라이트 ── */
+  input:focus, textarea:focus { background: #f0f4ff !important; }
+  .nav-cell:focus { background: #e8f0ff !important; outline: 1px solid var(--accent); outline-offset: -1px; }
+  @media print {
+    .toolbar, #floatRowBtns, .no-print { display: none !important; }
+    body { background: white; margin: 0; padding: 0; }
+    .main { width: 210mm !important; margin: 0 auto !important; padding: 0 !important; }
+    .doc-wrapper { margin-left: 0 !important; width: 210mm !important; }
+    .doc-page {
+      box-shadow: none !important;
+      margin: 0 !important;
+      padding: 12mm 14mm 14mm !important;
+      width: 210mm !important;
+      height: 297mm !important;
+      overflow: hidden !important;
+      page-break-after: always;
+    }
+    .doc-page:last-child { page-break-after: auto !important; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+    .supplier-tbl .lbl, .supplier-tbl .vert { background-color: #f0ede8 !important; }
+    .item-tbl th, .item-tbl .total-row td { background-color: #f0ede8 !important; }
+    .footer-2row .fl { background-color: #f0ede8 !important; }
+    input, textarea { border: none !important; outline: none !important; background: transparent !important; box-shadow: none !important; -webkit-appearance: none; }
+    #clientName { border-bottom: 2px solid #1a1814 !important; }
+    .page-num { display: block !important; }
+  }
+  .row-btn {
+    padding: 5px 14px; font-size: 12px; font-weight: 700;
+    border: 1.5px solid var(--border); border-radius: 4px;
+    background: #fff; cursor: pointer; font-family: inherit;
+    transition: background .15s;
+  }
+  .row-btn:hover { background: var(--bg); }
+  .row-btn.add { color: var(--accent); border-color: var(--accent); }
+  .row-btn.del { color: var(--red); border-color: var(--red); }
+
+  /* 플로팅 행 버튼 패널 */
+  #floatRowBtns, #floatExpBtns {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 50;
+    left: 0;
+    width: 70px;
+  }
+  #floatRowBtns .row-btn, #floatExpBtns .row-btn {
+    writing-mode: horizontal-tb;
+    white-space: nowrap;
+    font-size: 11px;
+    padding: 5px 8px;
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.12);
+    background: #fff;
+    width: 100%;
+    text-align: center;
+  }
+  @media print { #floatRowBtns, #floatExpBtns { display: none !important; } }
+
+  /* 인쇄용 숨김 */
+  /* ── A4 페이지 레이아웃 ── */
+  .doc-page {
+    box-shadow: 0 2px 16px rgba(0,0,0,.12);
+    margin-bottom: 24px;
+    width: 210mm;
+    height: 297mm;           /* 고정 높이 */
+    overflow: hidden;        /* 초과 내용 숨김 */
+    padding: 12mm 14mm 16mm;
+    background: #fff;
+    box-sizing: border-box;
+    position: relative;
+    page-break-after: always;
+  }
+  .doc-page:last-child { page-break-after: auto; margin-bottom: 0; }
+
+  .page-num {
+    position: absolute;
+    bottom: 5mm;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 10px;
+    color: var(--text-sub);
+    pointer-events: none;
+  }
+
+
+  /* 비고 textarea 자동 높이 */
+  .auto-textarea {
+    width: 100%;
+    border: 1px solid var(--border-light);
+    padding: 8px 10px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 11.5px;
+    line-height: 1.7;
+    resize: none;
+    outline: none;
+    background: #fafaf8;
+    color: var(--text);
+    overflow: hidden;
+    min-height: 60px;
+  }
+  .auto-textarea:focus { border-color: var(--accent); }
+
+  /* 사업명 입력 */
+  .project-input {
+    border: none; outline: none;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 19.5px;
+    font-weight: 600;
+    width: 100%;
+    background: transparent;
+    line-height: 1.5;
+    word-break: keep-all;
+  }
+  /* Breakdown Page Styles */
+  .section-title-box {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #1b4d3e;
+    margin-bottom: 12px;
+    margin-top: 20px;
+    padding: 8px 0;
+    display: flex;
+    align-items: center;
+    background: transparent;
+    border-bottom: 1px solid #ddd; /* Softer line for separation */
+  }
+  .section-badge {
+    background: #1b4d3e;
+    color: #fff;
+    padding: 3px 8px;
+    font-weight: 700;
+    margin-right: 10px;
+    display: inline-block;
+    min-width: 24px;
+    text-align: center;
+  }
+  .final-total-row td, .final-total-row input {
+    font-size: 14px !important;
+    font-weight: 800 !important;
+  }
+  .final-total-row {
+    background: #f0ede8 !important; /* Beige color to match theme */
+  }
+  .section-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #263238;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+  }
+  .section-amount {
+    border: none !important;
+    background: transparent !important;
+    font-size: 14px;
+    font-weight: 700;
+    color: #d32f2f !important; /* Red for amount */
+    text-align: right;
+    width: 90px;
+    outline: none;
+    padding: 0 4px;
+    font-family: inherit;
+  }
+  .formula-input {
+    border: none !important;
+    border-bottom: 1.5px solid #ccc !important;
+    background: transparent !important;
+    text-align: center;
+    width: 35px;
+    font-family: inherit;
+    font-size: 11px;
+    outline: none;
+    color: var(--text);
+  }
+  .formula-input:focus {
+    border-bottom: 1.5px solid var(--accent) !important;
+  }
+  .formula-text {
+    font-size: 11px;
+    color: #666;
+    margin: 8px 0 24px 36px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 400;
+  }
+  .breakdown-table input[readonly] {
+    border: none !important;
+    background: transparent !important;
+    outline: none;
+  }
+  .breakdown-table tr { height: 32px !important; }
+  .breakdown-table th, .breakdown-table td {
+    font-family: 'Noto Sans KR', sans-serif !important;
+    font-size: 11px !important; padding: 4px 8px !important;
+  }
+  .breakdown-table input { font-family: 'Noto Sans KR', sans-serif !important; font-size: 11px !important; }
+  
+  /* 페이지 2 (세부내역) 전용: 일반 표 행 높이 고정 */
+  #page2_labor .item-tbl tr { height: 32px !important; }
+  #page2_labor .item-tbl.applied-table tr { height: 25px !important; }
+  #page2_labor .item-tbl td, #page2_labor .item-tbl th {
+    font-family: 'Noto Sans KR', sans-serif !important;
+    font-size: 11px !important;
+    padding: 4px 8px !important;
+  }
+
+  /* 인건비 산출근거(Section 8) 전용: 행 높이 극한 최소화 (12.5px) */
+  #basisBody tr, #basisBody + tr { height: 12.5px !important; }
+  #basisBody td, #basisBody th, #basisBody input, .basis-avg, #basisBody + tr td {
+    padding: 0px 4px !important;
+    margin: 0 !important;
+    font-size: 10px !important;
+    line-height: 12.5px !important;
+    height: 12.5px !important;
+    min-height: 12.5px !important;
+    font-family: 'Noto Sans KR', sans-serif !important;
+    background: transparent !important;
+    border: 1px solid #ccc !important;
+  }
+  #basisBody input, .applied-val {
+    border: none !important;
+    background: transparent !important;
+    width: 100% !important;
+    text-align: center !important;
+    height: 12.5px !important;
+    line-height: 12.5px !important;
+  }
+  
+  /* 비고란: 1줄일 때는 12.5px 유지, 내용 많을 때만 자동 확장 */
+  #basisBody .basis-note {
+    width: 90px !important;
+    font-size: 8.5px !important;
+    letter-spacing: -0.8px !important;
+    line-height: 1.1 !important;
+    white-space: normal !important;
+    word-break: break-all !important;
+    padding: 0px 2px !important;
+    height: 12.5px !important;
+    min-height: 12.5px !important;
+    text-align: left !important;
+    overflow: hidden;
+  }
+  #basisBody tr:has(.basis-note:not(:empty)) { height: auto !important; }
+
+  /* 공급자 테이블 */
+  .supplier-tbl { width: 100%; border-collapse: collapse; }
+  .supplier-tbl td {
+    border: 1px solid var(--border);
+    padding: 4px 8px;
+    font-size: 11.5px;
+    vertical-align: middle;
+  }
+  .supplier-tbl .lbl {
+    background: #f0ede8;
+    font-weight: 700;
+    text-align: center;
+    white-space: nowrap;
+    color: var(--text-sub);
+  }
+  .supplier-tbl .vert {
+    background: #f0ede8;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text-sub);
+    writing-mode: vertical-lr;
+    text-orientation: mixed;
+    letter-spacing: .18em;
+    width: 22px;
+    padding: 4px 2px;
+    font-size: 12px;
+  }
+  .stamp-box {
+    width: 48px; min-width: 48px;
+    height: 48px;
+    border: 1px solid var(--border);
+  }
+
+  /* 하단 정보 2행 */
+  .footer-2row { border-collapse: collapse; width: 100%; margin-top: 14px; }
+  .footer-2row td {
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    font-size: 11.5px;
+    vertical-align: middle;
+  }
+  .footer-2row .fl { font-weight: 700; color: var(--text-sub); white-space: nowrap; background: #f0ede8; width: 70px; }
+
+  @media print {
+    .toolbar, .row-controls, .no-print { display: none !important; }
+    body { background: white; margin: 0; padding: 0; }
+    .main { margin: 0; padding: 0; max-width: 100%; }
+
+    /* A4 페이지 설정 */
+    .doc-page {
+      box-shadow: none !important;
+      border: none !important;
+      margin: 0 !important;
+      padding: 10mm 14mm 10mm !important;
+      width: 210mm !important;
+      max-height: none !important;
+      min-height: 297mm !important;
+      page-break-after: always;
+    }
+    .doc-page:last-child { page-break-after: auto; margin-bottom: 0; }
+    .doc { box-shadow: none; border: none; background: transparent; }
+
+    /* 배경색 강제 인쇄 - 핵심 */
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+
+    /* 표 배경색 명시 */
+    .supplier-tbl .lbl  { background-color: #f0ede8 !important; }
+    .supplier-tbl .vert { background-color: #f0ede8 !important; }
+    .item-tbl th        { background-color: #f0ede8 !important; }
+    .item-tbl .total-row td { background-color: #f0ede8 !important; }
+    .footer-2row .fl    { background-color: #f0ede8 !important; }
+    .info-tbl .lbl      { background-color: #f0ede8 !important; }
+    .info-tbl .lbl-vert { background-color: #f0ede8 !important; }
+
+    /* 입력창 인쇄 시 깔끔하게 */
+    input {
+      border: none !important;
+      border-bottom: none !important;
+      outline: none !important;
+      background: transparent !important;
+      -webkit-appearance: none;
+      box-shadow: none !important;
+    }
+    textarea {
+      border: none !important;
+      outline: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      resize: none;
+    }
+    /* 회사명 밑줄만 인쇄 */
+    #clientName {
+      border-bottom: 2px solid #1a1814 !important;
+    }
+    .page-num { display: block !important; }
+
+    /* 절사 규칙 드롭다운 인쇄 스타일: 박스 제거하고 텍스트만 표시 */
+    .print-as-text {
+      border: none !important;
+      background: transparent !important;
+      appearance: none !important;
+      -webkit-appearance: none !important;
+      padding: 0 !important;
+      color: inherit !important;
+    }
+  }
+/* 사업명 placeholder 스타일 */
+#projectName::placeholder {
+  color: #b3b3b3 !important; /* 더 흐린 회색 */
+  font-weight: 400 !important;
+}
+
+/* 협력사명 placeholder 스타일 */
+#clientName::placeholder {
+  color: #b3b3b3 !important;
+  font-weight: 400 !important;
+}
+
+/* 입력칸 힌트 배경 (인쇄시 숨김) */
+.hint-bg {
+  background-color: #f4f4f4 !important;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+}
+.hint-bg:focus {
+  background-color: #e8e8e8 !important;
+}
+
+/* 비고란 placeholder 스타일 */
+#memoField::placeholder, .auto-textarea::placeholder {
+  color: #b3b3b3 !important; /* 흐릿한 회색 */
+  font-weight: 400 !important;
+}
+
+.auto-textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 12.5px;
+  line-height: 1.6;
+  resize: none;
+  outline: none;
+  background: #fff;
+  min-height: 100px;
+  overflow: hidden;
+}
+
+@media print {
+  .hint-bg {
+    background-color: transparent !important;
+  }
+  /* 인쇄 시 모든 placeholder 숨김 */
+  ::placeholder {
+    color: transparent !important;
+  }
+}
