@@ -43,8 +43,13 @@ let rowCount = 6;
 // 레이아웃별 독립된 데이터 저장소
 let dataA = null;
 let dataB = null;
+let _showSWPage = false;
 
 const defaultMemo = ``;
+
+// ── 구글 스프레드시트 공유 견적번호 설정 ──
+const GS_URL = "https://script.google.com/macros/s/AKfycbywK7uHSTeY9JrVfJCr3kLvAB-Jlt-ixM1I0Z6U3lqJEpPmpyGSzNZptkA0FHawsdZt/exec";
+let _serverSeq = null; // 서버에서 받아온 현재 시퀀스
 
 // ═══════════════════════════════════════════════
 //  렌더링
@@ -105,7 +110,7 @@ function paginatePages() {
   if (!tbody) return;
 
   // 1. 기존에 생성된 추가 페이지들로부터 요소들을 원본 위치로 복구
-  wrapper.querySelectorAll('.doc-page:not(#page1):not(#page2_labor):not(#page3_expenses)').forEach(p => {
+  wrapper.querySelectorAll('.doc-page:not(#page1):not(#page2_labor):not(#page3_expenses):not(#pageSW)').forEach(p => {
     const dynamicTbody = p.querySelector('.dynamic-tbody');
     if (dynamicTbody) {
         while (dynamicTbody.firstChild) {
@@ -162,6 +167,10 @@ function paginatePages() {
   if (getCurrentHeight(page1) <= PAGE_CONTENT_H) {
     document.getElementById('pageNum1').textContent = '- 1 -';
     if (currentLayout === 'B') paginateBreakdownB(2);
+    else if (_showSWPage) {
+       const pNum = document.getElementById('pageSW')?.querySelector('.page-num');
+       if (pNum) pNum.textContent = '- 2 -';
+    }
     return;
   }
 
@@ -257,6 +266,12 @@ function paginatePages() {
   document.getElementById('pageNum1').textContent = '- 1 -';
   if (currentLayout === 'B') {
     paginateBreakdownB(currentPageNum + 1);
+  } else if (_showSWPage) {
+    const pSW = document.getElementById('pageSW');
+    if (pSW) {
+      const pNum = pSW.querySelector('.page-num');
+      if (pNum) pNum.textContent = `- ${currentPageNum + 1} -`;
+    }
   }
 }
 
@@ -398,38 +413,69 @@ function positionFloatBtns() {
     const relExpLeft = wrapperRect.left - mainRect.left - 76;
     expPanel.style.top = Math.max(0, relExpTop) + 'px';
     expPanel.style.left = Math.max(0, relExpLeft) + 'px';
-    expPanel.style.display = '';
+    expPanel.style.display = 'flex';
   } else {
     const expPanel = document.getElementById('floatExpBtns');
     if (expPanel) expPanel.style.display = 'none';
   }
+
+  // 3. SW 단가표용 버튼 패널
+  const swTable = document.querySelector('#pageSW .item-tbl');
+  if (swTable && _showSWPage) {
+    let swPanel = document.getElementById('floatSWBtns');
+    if (!swPanel) {
+      swPanel = document.createElement('div');
+      swPanel.id = 'floatSWBtns';
+      swPanel.innerHTML = `
+        <button class="row-btn add" onclick="addSWRow()">＋ 행 추가</button>
+        <button class="row-btn del" onclick="delSWRow()">－ 행 삭제</button>
+      `;
+      main.appendChild(swPanel);
+    }
+    const swRect = swTable.getBoundingClientRect();
+    const relSWTop = swRect.top - mainRect.top + main.scrollTop;
+    const relSWLeft = wrapperRect.left - mainRect.left - 76;
+    swPanel.style.top = Math.max(0, relSWTop) + 'px';
+    swPanel.style.left = Math.max(0, relSWLeft) + 'px';
+    swPanel.style.display = 'flex';
+  } else {
+    const swPanel = document.getElementById('floatSWBtns');
+    if (swPanel) swPanel.style.display = 'none';
+  }
 }
 
 window.addEventListener('resize', positionFloatBtns);
+window.addEventListener('scroll', positionFloatBtns);
 
 // ── 레이아웃 A (1번·3번 스타일) ────────────────
 function renderLayoutA(co, dateStr, noStr, saved) {
   const rows = buildRowsA(saved.items || []);
   const memo = saved.memo !== undefined ? saved.memo : defaultMemo;
-  return buildPageA(co, dateStr, noStr, saved, rows, memo);
+  const p1 = buildPageA(co, dateStr, noStr, saved, rows, memo);
+  
+  let p2 = "";
+  if (_showSWPage) {
+    p2 = buildSWDiscountPage(saved);
+  }
+  
+  return `<div class="doc-wrapper" id="docWrapper">${p1}${p2}</div>`;
 }
 
 function buildPageA(co, dateStr, noStr, saved, rows, memo) {
   return `
-  <div class="doc-wrapper" id="docWrapper">
     <div class="doc-page" id="page1">
 
       <!-- NO + 제목 -->
-      <div style="text-align:right;font-size:11px;color:var(--text-sub);margin-bottom:4px">NO. <strong>${noStr}</strong></div>
+      <div style="text-align:right;font-size:11px;color:var(--text-sub);margin-bottom:4px">NO. <strong id="displayNo">${noStr}</strong></div>
       <div class="doc-title" style="margin-bottom:18px">견 적 서</div>
 
       <!-- 헤더: 수신부 + 공급자 -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;align-items:start">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:20px">
 
         <!-- 수신부 -->
-        <div>
-          <div style="font-size:11.5px;color:var(--text-sub);margin-bottom:8px">
-            견적일 :&nbsp;
+        <div style="flex:1">
+          <div class="date-line" style="margin-bottom:12px">
+            견적일 :
             <input id="quoteDate" class="nav-cell" value="${dateStr}" style="border:none;border-bottom:1px solid #bbb;font-size:11.5px;width:130px;font-family:inherit;outline:none;background:transparent;padding:1px 4px">
           </div>
           <div style="display:flex;align-items:flex-end;gap:6px;margin-bottom:8px">
@@ -509,7 +555,16 @@ function buildPageA(co, dateStr, noStr, saved, rows, memo) {
 
       <!-- 비고 -->
       <div style="margin-top:14px">
-        <div style="font-weight:700;font-size:12px;margin-bottom:6px">비고</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px">
+          <div style="font-weight:700;font-size:12px">비고</div>
+          <div class="no-print" style="display:flex; align-items:center; gap:8px">
+            <span style="font-size:11px; color:var(--text-sub)">SW 수량별 단가표</span>
+            <div class="sw-toggle-btns">
+              <button class="btn-sw-opt ${!_showSWPage ? 'active' : ''}" onclick="toggleSWDiscountPage(false)">끄기</button>
+              <button class="btn-sw-opt ${_showSWPage ? 'active' : ''}" onclick="toggleSWDiscountPage(true)">켜기</button>
+            </div>
+          </div>
+        </div>
         <textarea id="memoField" class="auto-textarea" oninput="autoResize(this)" placeholder="내용을 입력하세요">${memo}</textarea>
       </div>
 
@@ -528,8 +583,108 @@ function buildPageA(co, dateStr, noStr, saved, rows, memo) {
       </table>
 
       <div class="page-num" id="pageNum1">- 1 -</div>
+    </div>`;
+}
+
+function buildSWDiscountPage(saved) {
+  let swData = saved.swDiscounts;
+  if (!swData || swData.length === 0) {
+    swData = [{}, {}, {}, {}, {}, {}];
+  }
+  let rows = "";
+  swData.forEach((d, i) => {
+    const namePH = (i === 0) ? "제품명" : "";
+    const periodPH = (i === 0) ? "예: 1년" : "";
+    rows += `
+      <tr>
+        <td><input class="sw-name nav-cell" value="${d.name||''}" placeholder="${namePH}"></td>
+        <td><input class="sw-period nav-cell" value="${d.period||''}" placeholder="${periodPH}"></td>
+        <td><input class="sw-qty nav-cell" value="${d.qty||''}" style="text-align:right"></td>
+        <td><input class="sw-price nav-cell" value="${d.price||''}" style="text-align:right"></td>
+        <td><input class="sw-amount nav-cell" value="${d.amount||''}" style="text-align:right" readonly></td>
+        <td><input class="sw-rate nav-cell" value="${d.rate||''}" style="text-align:right" oninput="calcSWRow(this)"></td>
+        <td><input class="sw-real nav-cell" value="${d.real||''}" style="text-align:right"></td>
+      </tr>
+    `;
+  });
+
+  return `
+    <div class="doc-page" id="pageSW" style="padding: 12mm 14mm 16mm;">
+      <div class="doc-title" style="font-size:24px; margin-bottom:40px; margin-top:20px">SW 수량별 단가표 (상세)</div>
+      
+      <div style="font-weight:700; font-size:14px; margin-bottom:12px">❚ SW수량별 단가</div>
+      <table class="item-tbl">
+        <thead>
+          <tr>
+            <th>제품명</th>
+            <th style="width:90px">기간</th>
+            <th style="width:80px">수량(copy)</th>
+            <th style="width:105px">단가(원)</th>
+            <th style="width:110px">금액(원)</th>
+            <th style="width:80px">할인율(%)</th>
+            <th style="width:100px">실사용가능 수</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+      
+      <div style="margin-top:40px; font-size:12px; color:#666; line-height:1.6">
+        <div style="font-weight:700; margin-bottom:5px">❚ 안내사항</div>
+        <div>• 본 단가표는 수량 구간별 차등 할인율이 적용된 제안 가격입니다.</div>
+        <div>• 대량 구매 또는 연간 계약 시 추가 협의가 가능합니다.</div>
+      </div>
+
+      <div class="page-num">- 2 -</div>
     </div>
-  </div>`;
+  `;
+}
+
+function toggleSWDiscountPage(show) {
+  _showSWPage = show;
+  render();
+}
+
+function calcSWRow(input) {
+  const tr = input.closest('tr');
+  const qtyStr = tr.querySelector('.sw-qty').value;
+  const priceStr = tr.querySelector('.sw-price').value;
+  
+  const qty = parseInt(qtyStr.replace(/,/g, '')) || 0;
+  const price = parseInt(priceStr.replace(/,/g, '')) || 0;
+  
+  if (qty > 0 && price > 0) {
+    const amount = qty * price;
+    tr.querySelector('.sw-amount').value = amount.toLocaleString();
+  } else {
+    tr.querySelector('.sw-amount').value = '';
+  }
+}
+
+function addSWRow() {
+  const tbody = document.querySelector('#pageSW .item-tbl tbody');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input class="sw-name nav-cell" placeholder="제품명"></td>
+    <td><input class="sw-period nav-cell" placeholder="예: 1년"></td>
+    <td><input class="sw-qty nav-cell" style="text-align:right"></td>
+    <td><input class="sw-price nav-cell" style="text-align:right"></td>
+    <td><input class="sw-amount nav-cell" style="text-align:right" readonly></td>
+    <td><input class="sw-rate nav-cell" style="text-align:right" oninput="calcSWRow(this)"></td>
+    <td><input class="sw-real nav-cell" style="text-align:right"></td>
+  `;
+  tbody.appendChild(tr);
+  attachEvents(); // 이벤트 다시 연결
+  buildNavMap();
+}
+
+function delSWRow() {
+  const tbody = document.querySelector('#pageSW .item-tbl tbody');
+  if (!tbody || tbody.children.length <= 1) return;
+  tbody.removeChild(tbody.lastElementChild);
+  buildNavMap();
 }
 
 
@@ -695,7 +850,31 @@ function buildLaborCostPageB(saved) {
           <tr><td>선임연구원</td><td><input class="lc-val nav-cell" oninput="calcBreakdown()" value="${lc.p3||'0'}"></td><td><input class="lc-val nav-cell" oninput="calcBreakdown()" value="${lc.m3||'12'}"></td><td><input class="lc-val nav-cell right" oninput="calcBreakdown()" value="${lc.u3||'405,573'}"></td><td><input class="lc-val nav-cell right" readonly value="${lc.a3||'0'}"></td><td><input class="lc-val nav-cell" value="${lc.n3||''}"></td></tr>
           <tr><td>연구원</td><td><input class="lc-val nav-cell" oninput="calcBreakdown()" value="${lc.p4||'0'}"></td><td><input class="lc-val nav-cell" oninput="calcBreakdown()" value="${lc.m4||'12'}"></td><td><input class="lc-val nav-cell right" oninput="calcBreakdown()" value="${lc.u4||'284,254'}"></td><td><input class="lc-val nav-cell right" readonly value="${lc.a4||'0'}"></td><td><input class="lc-val nav-cell" value="${lc.n4||''}"></td></tr>
           <tr style="font-weight:700; background:#f5f5f5">
-            <td>합계</td><td>-</td><td>-</td><td>-</td><td><input class="lc-total nav-cell right" style="color:#d32f2f; font-weight:700" readonly value="${lc.total||'0'}"></td><td></td></tr>
+            <td colspan="4" style="text-align:center;">합계</td><td><input class="lc-total nav-cell right" style="color:#d32f2f; font-weight:700" readonly value="${lc.total||'0'}"></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <!-- 적용 인건비 -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin:15px 0 6px 0">
+        <div style="font-weight:700">❚ 적용 인건비</div>
+        <div style="font-size:10px; color:#666">(단위: 원, 1인 1일 기준)</div>
+      </div>
+      <table class="item-tbl applied-table" style="margin-bottom:15px">
+        <thead>
+          <tr style="background:#f5f5f5">
+            <th style="width:25%">연구원</th>
+            <th style="width:25%">선임연구원</th>
+            <th style="width:25%">책임연구원</th>
+            <th style="width:25%">수석연구원</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input class="applied-val nav-cell right" readonly value="284,254"></td>
+            <td><input class="applied-val nav-cell right" readonly value="405,573"></td>
+            <td><input class="applied-val nav-cell right" readonly value="522,115"></td>
+            <td><input class="applied-val nav-cell right" readonly value="638,657"></td>
+          </tr>
         </tbody>
       </table>
 
@@ -729,29 +908,6 @@ function buildLaborCostPageB(saved) {
         주2) 100백분위수는 50백분위수와 75백분위 값으로 보정하여 사용
       </div>
 
-      <!-- 적용 인건비 -->
-      <div style="display:flex; justify-content:space-between; align-items:center; margin:15px 0 6px 0">
-        <div style="font-weight:700">❚ 적용 인건비</div>
-        <div style="font-size:10px; color:#666">(단위: 원, 1인 1일 기준)</div>
-      </div>
-      <table class="item-tbl applied-table" style="margin-bottom:15px">
-        <thead>
-          <tr style="background:#f5f5f5">
-            <th style="width:25%">연구원</th>
-            <th style="width:25%">선임연구원</th>
-            <th style="width:25%">책임연구원</th>
-            <th style="width:25%">수석연구원</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><input class="applied-val nav-cell right" readonly value="284,254"></td>
-            <td><input class="applied-val nav-cell right" readonly value="405,573"></td>
-            <td><input class="applied-val nav-cell right" readonly value="522,115"></td>
-            <td><input class="applied-val nav-cell right" readonly value="638,657"></td>
-          </tr>
-        </tbody>
-      </table>
     </div>
     <div class="page-num" id="pageNum2">- 2 -</div>
   </div>
@@ -760,7 +916,9 @@ function buildLaborCostPageB(saved) {
     <div class="doc-content" style="font-size:11px">
 
       <!-- 2. 직접경비 -->
-      <div class="section-title-box"><span class="section-badge">2</span> 직접경비</div>
+      <div class="section-title-box">
+        <span class="section-badge">2</span> 직접경비
+      </div>
       <table class="item-tbl breakdown-table" id="expenseTableB" style="margin-bottom:15px">
         <thead>
           <tr style="background:#e0f2f1">
@@ -918,8 +1076,8 @@ function buildRowsA(items) {
 function buildRowsB(saved) {
   const items = saved.items || [];
   const coreNames = ['직접인건비', '직접경비', '제경비', '기술료'];
-  const summaryNames = ['합계', '부가가치세', '견적금액'];
-  const summaryNotes = ['①+②+③+④', '⑤의 x 10%', '십만원이하 절사'];
+  const summaryNames = ['합계', '절사금액', '부가가치세', '견적금액'];
+  const summaryNotes = ['①+②+③+④', '', '⑥의 x 10%', '⑥ + ⑦'];
   
   let html = '';
   // Data Rows
@@ -942,18 +1100,19 @@ function buildRowsB(saved) {
     </tr>`;
   }
   // Summary Rows: Editable notes
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 4; i++) {
     const name = summaryNames[i];
     const defaultNote = summaryNotes[i];
     const savedNote = (saved.summaryNotes && saved.summaryNotes[i] !== undefined) ? saved.summaryNotes[i] : defaultNote;
     
     let amountClass = 'row-amount right';
     if (name === '합계') amountClass += ' b-subtotal';
+    if (name === '절사금액') amountClass += ' b-discount';
     if (name === '부가가치세') amountClass += ' b-vat';
     if (name === '견적금액') amountClass += ' b-total';
     
     let noteCell = `<input class="row-note left nav-cell" value="${savedNote}" style="width:100%;font-size:11px;color:#666">`;
-    if (currentLayout === 'B' && name === '견적금액') {
+    if (currentLayout === 'B' && name === '절사금액') {
       const rule = saved.discountRuleB || '100000';
       noteCell = `
         <div style="display:flex; align-items:center; gap:8px">
@@ -967,11 +1126,9 @@ function buildRowsB(saved) {
       `;
     }
 
-    html += `<tr class="summary-row ${name==='견적금액'?'final-total-row':''}" style="background:#f9f9f9">
-      <td></td>
-      <td class="name-cell"><input class="row-name left" value="${name}" readonly style="width:100%;font-weight:700"></td>
-      <td></td><td></td><td></td>
-      <td><input class="${amountClass}" readonly style="font-weight:700;color:#d32f2f"></td>
+    html += `<tr class="summary-row ${name==='견적금액'?'final-total-row':''}" data-name="${name}" style="background:#f9f9f9">
+      <td colspan="5" style="text-align:center;font-weight:700;color:#333">${name}</td>
+      <td><input class="${amountClass}" readonly style="font-weight:700;color:#d32f2f;width:100%;border:none;background:transparent;text-align:right"></td>
       <td>${noteCell}</td>
     </tr>`;
   }
@@ -997,7 +1154,7 @@ function buildSummaryA(saved) {
       </td>
     </tr>
     <tr class="sum-row"><td colspan="5" style="text-align:center;font-weight:700">부가가치세</td><td id="vatVal" style="text-align:right;padding-right:8px"></td><td></td></tr>
-    <tr class="total-row final-total-row"><td colspan="5" style="text-align:center;font-size:13px">견적금액(공급가액+세액)</td><td id="totalVal" style="text-align:right;padding-right:8px;font-size:13.5px"></td><td></td></tr>
+    <tr class="total-row final-total-row"><td colspan="5" style="text-align:center;font-size:13px">견적금액</td><td id="totalVal" style="text-align:right;padding-right:8px;font-size:13.5px"></td><td></td></tr>
   </tfoot>`;
 }
 
@@ -1027,10 +1184,10 @@ function calcAll() {
     const qty   = parseNum(tr.querySelector('.row-qty')?.value);
     const price = parseNum(tr.querySelector('.row-price')?.value);
     const amtEl = tr.querySelector('.row-amount');
-    const name  = tr.querySelector('.row-name')?.value || '';
+    const name  = tr.dataset.name || tr.querySelector('.row-name')?.value || '';
     
-    // 기술용역형의 자동 계산 행(합계, 부가세, 견적금액)은 합산에서 일단 제외
-    if (currentLayout === 'B' && ['합계','부가가치세','견적금액'].includes(name)) {
+    // 기술용역형의 자동 계산 행(합계, 절사금액, 부가세, 견적금액)은 합산에서 일단 제외
+    if (currentLayout === 'B' && ['합계','절사금액','부가가치세','견적금액'].includes(name)) {
       // 나중에 별도 계산
     } else {
       const amt = qty && price ? qty * price : 0;
@@ -1090,9 +1247,11 @@ function calcAll() {
     }
 
     allRows.forEach(tr => {
-      const name = tr.querySelector('.row-name')?.value || '';
+      const name = tr.dataset.name || tr.querySelector('.row-name')?.value || '';
       const amtEl = tr.querySelector('.row-amount');
       if (name === '합계') {
+        if (amtEl) amtEl.value = fmt(subTotal);
+      } else if (name === '절사금액') {
         if (amtEl) amtEl.value = fmt(roundedSubTotalB);
       } else if (name === '부가가치세') {
         if (amtEl) amtEl.value = fmt(vatB_final);
@@ -1305,13 +1464,15 @@ function wrapProjectName(el) {
 
 function attachEvents() {
   // 수량/단가 콤마 포맷 + 계산
-  document.querySelectorAll('.row-qty, .row-price, .exp-qty, .exp-uprice').forEach(el => {
+  document.querySelectorAll('.row-qty, .row-price, .exp-qty, .exp-uprice, .sw-qty, .sw-price').forEach(el => {
     el.addEventListener('input', () => {
       const raw = el.value.replace(/,/g,'');
       if (!isNaN(raw) && raw !== '') el.value = parseFloat(raw).toLocaleString('ko-KR');
       
       if (el.classList.contains('exp-qty') || el.classList.contains('exp-uprice')) {
         calcBreakdown();
+      } else if (el.classList.contains('sw-qty') || el.classList.contains('sw-price')) {
+        calcSWRow(el);
       } else {
         calcAll();
       }
@@ -1319,6 +1480,8 @@ function attachEvents() {
     el.addEventListener('blur', () => {
       if (el.classList.contains('exp-qty') || el.classList.contains('exp-uprice')) {
         calcBreakdown();
+      } else if (el.classList.contains('sw-qty') || el.classList.contains('sw-price')) {
+        calcSWRow(el);
       } else {
         calcAll();
       }
@@ -1449,6 +1612,22 @@ function collectValues() {
       laborCost = dataB.laborCost;
     }
     const eb = document.getElementById('expenseBodyB');
+
+  // SW 수량별 단가표 데이터 수집
+  const swDiscounts = [];
+  const swPage = document.getElementById('pageSW');
+  if (swPage) {
+    swPage.querySelectorAll('tbody tr').forEach(tr => {
+      swDiscounts.push({
+        cat:   tr.querySelector('.sw-cat')?.value || '',
+        range: tr.querySelector('.sw-range')?.value || '',
+        base:  tr.querySelector('.sw-base')?.value || '',
+        rate:  tr.querySelector('.sw-rate')?.value || '',
+        final: tr.querySelector('.sw-final')?.value || '',
+        note:  tr.querySelector('.sw-note')?.value || '',
+      });
+    });
+  }
     if (eb) {
       expensesB_rows = Array.from(eb.querySelectorAll('tr')).map(tr => ({
         cat: tr.querySelector('.exp-cat')?.value || '',
@@ -1491,6 +1670,24 @@ function collectValues() {
     }
   }
 
+  const swDiscounts = [];
+  const swRows = document.querySelectorAll('#pageSW tbody tr');
+  if (swRows.length > 0) {
+    swRows.forEach(tr => {
+      swDiscounts.push({
+        name:   tr.querySelector('.sw-name')?.value || '',
+        period: tr.querySelector('.sw-period')?.value || '',
+        qty:    tr.querySelector('.sw-qty')?.value || '',
+        price:  tr.querySelector('.sw-price')?.value || '',
+        amount: tr.querySelector('.sw-amount')?.value || '',
+        rate:   tr.querySelector('.sw-rate')?.value || '',
+        real:   tr.querySelector('.sw-real')?.value || ''
+      });
+    });
+  } else if (dataA && dataA.swDiscounts) {
+    swDiscounts.push(...dataA.swDiscounts);
+  }
+
   return {
     items,
     summaryNotes,
@@ -1507,6 +1704,7 @@ function collectValues() {
     memo:         document.getElementById('memoField')?.value   || '',
     discountRule: document.getElementById('discountRule')?.value  || '100000',
     discountRuleB:document.getElementById('discountRuleB')?.value || '100000',
+    swDiscounts
   };
 }
 
@@ -1594,81 +1792,327 @@ function resetForm() {
 // ═══════════════════════════════════════════════
 //  PDF 다운로드
 // ═══════════════════════════════════════════════
-function downloadPDF() {
-  // PDF 출력 시 번호 확정 및 증가
-  incrementQuoteNo();
-  _currentQuoteNo = null; // 다음 견적은 새 번호
-  window.print();
-}
+async function downloadPDF() {
+  const btn = document.getElementById('btnPDF') || document.querySelector('.btn-pdf');
+  if (!btn) { console.error('PDF 버튼을 찾을 수 없습니다.'); window.print(); return; }
+  const originalText = btn.innerHTML;
+  const dropdown = document.querySelector('.dropdown');
+  
+  try {
+    _isExporting = true;
+    if (dropdown) dropdown.classList.add('active'); // 메뉴 유지
 
-// ═══════════════════════════════════════════════
-//  Excel 다운로드
-// ═══════════════════════════════════════════════
-function downloadExcel() {
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right:5px"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg> 번호 확정 중...';
+    
+    // 1. 서버에서 실제 번호를 확정받음
+    const finalSeq = await incrementQuoteNo();
+    
+    // 2. 확정된 번호로 화면 갱신
+    const y = new Date().getFullYear();
+    const m = String(new Date().getMonth()+1).padStart(2,'0');
+    _currentQuoteNo = `${y}-${m}-${String(finalSeq).padStart(4, '0')}`;
+    render();
+    
+    // 3. 잠시 후 출력
+    setTimeout(() => {
+      // 인쇄 시 placeholder 제거 (빈 값이면 안내 문구가 출력되는 문제 해결)
+      const inputs = document.querySelectorAll('input[placeholder], textarea[placeholder]');
+      const originalPlaceholders = [];
+      inputs.forEach(el => {
+        originalPlaceholders.push({ el: el, text: el.getAttribute('placeholder') });
+        el.setAttribute('placeholder', '');
+      });
+
+      window.print();
+      
+      // 인쇄 후 placeholder 복구
+      originalPlaceholders.forEach(item => {
+        item.el.setAttribute('placeholder', item.text);
+      });
+      
+      _currentQuoteNo = null;
+      render();
+
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      _isExporting = false;
+      if (dropdown) dropdown.classList.remove('active'); // 완료 후 닫기
+    }, 500);
+  } catch (e) {
+    console.error("번호 갱신 실패:", e);
+    alert("번호 확정 중 오류가 발생했습니다.");
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+    _isExporting = false;
+    if (dropdown) dropdown.classList.remove('active');
+  }
+}
+async function downloadExcel() {
   const co = companies[currentCompany];
   const saved = collectValues();
-  const wb = XLSX.utils.book_new();
   const isB = currentLayout === 'B';
+  const coName = currentCompany === 'baron' ? '바론컨설턴트' : '장헌기술단';
+  const today = new Date().toISOString().slice(0,10);
+  const workbook = new ExcelJS.Workbook();
 
+  // 공통 스타일 정의
+  const borderStyle = {
+    top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'}
+  };
+  const headerFill = {
+    type: 'pattern', pattern: 'solid', fgColor: {argb: 'FFF5F5F5'}
+  };
+  const centerAlign = { horizontal: 'center', vertical: 'middle' };
+  const rightAlign = { horizontal: 'right', vertical: 'middle' };
+
+  // ── 1. 메인 견적서 시트 ────────────────
+  const sheet = workbook.addWorksheet(isB ? '견적요약' : '견적서');
+  const colCount = isB ? 8 : 7;
+
+  // 너비 설정
+  if (isB) {
+    sheet.columns = [
+      { width: 5 }, { width: 28 }, { width: 15 }, { width: 6 }, { width: 6 }, { width: 15 }, { width: 15 }, { width: 15 }
+    ];
+  } else {
+    sheet.columns = [
+      { width: 5 }, { width: 35 }, { width: 8 }, { width: 10 }, { width: 15 }, { width: 15 }, { width: 15 }
+    ];
+  }
+
+  // 제목 (Row 1)
+  sheet.mergeCells(1, 1, 1, colCount);
+  const titleCell = sheet.getCell(1, 1);
+  titleCell.value = isB ? '견 적 요 약 서' : '견 적 서';
+  titleCell.font = { size: 24, bold: true, letterSpacing: 10 };
+  titleCell.alignment = centerAlign;
+
+  // 견적번호 (Row 2)
+  sheet.mergeCells(2, 1, 2, colCount);
+  const noCell = sheet.getCell(2, 1);
+  noCell.value = '견적번호: ' + (getQuoteNo().str);
+  noCell.alignment = { horizontal: 'right' };
+  noCell.font = { size: 10, color: {argb: 'FF666666'} };
+
+  // 상단 정보 (Row 4~8)
+  const infoData = [
+    ['견적일', saved.quoteDate, '', '', '상호', co.corp],
+    ['수신', saved.clientName + ' 귀하', '', '', '사업자번호', co.regNo],
+    ['', '', '', '', '대표자', co.ceo],
+    ['', '', '', '', '소재지', co.address],
+    ['', '', '', '', '담당자', saved.contactPerson]
+  ];
+
+  infoData.forEach((row, i) => {
+    const rIdx = 4 + i;
+    sheet.getRow(rIdx).values = row;
+    sheet.mergeCells(rIdx, 2, rIdx, 4);
+    sheet.mergeCells(rIdx, 6, rIdx, colCount);
+    
+    // 라벨 스타일
+    [1, 5].forEach(c => {
+      const cell = sheet.getCell(rIdx, c);
+      cell.fill = headerFill;
+      cell.font = { bold: true };
+      cell.alignment = centerAlign;
+      cell.border = borderStyle;
+    });
+    // 값 스타일
+    [2, 6].forEach(c => {
+      const cell = sheet.getCell(rIdx, c);
+      cell.border = borderStyle;
+      cell.alignment = { vertical: 'middle', indent: 1 };
+    });
+  });
+
+  // 사업명 (Row 10)
+  sheet.getRow(10).values = ['사업명', saved.projectName];
+  sheet.mergeCells(10, 2, 10, colCount);
+  const projLbl = sheet.getCell(10, 1);
+  projLbl.fill = headerFill; projLbl.font = { bold: true }; projLbl.alignment = centerAlign; projLbl.border = borderStyle;
+  const projVal = sheet.getCell(10, 2);
+  projVal.border = borderStyle; projVal.font = { bold: true }; projVal.alignment = { vertical: 'middle', indent: 1 };
+
+  // 테이블 헤더 (Row 12)
   const header = isB
     ? ['No.','품목','규격','단위','수량','단가','공급가액','비고']
     : ['No.','품명','단위','수량','단가(원)','금액(원)','비고'];
+  sheet.getRow(12).values = header;
+  sheet.getRow(12).eachCell(c => {
+    c.fill = { type:'pattern', pattern:'solid', fgColor:{argb: isB ? 'FFE0F2F1' : 'FFF5F5F5'} };
+    c.font = { bold: true };
+    c.alignment = centerAlign;
+    c.border = borderStyle;
+  });
 
-  const rows = [
-    ['견 적 서'],
-    [],
-    ['견적일', saved.quoteDate, '', '상호', co.corp],
-    ['수신', saved.clientName + ' 귀하', '', '사업자번호', co.regNo],
-    ['', '', '', '대표자', co.ceo],
-    ['', '', '', '소재지', co.address],
-    ['', '', '', '담당자', saved.contactPerson],
-    [],
-    ['사업명', saved.projectName],
-    [],
-    header,
-    ...saved.items.map(it => isB
-      ? [it.no, it.name, it.spec, it.unit, parseNum(it.qty), parseNum(it.price), parseNum(it.amount), it.note]
-      : [it.no, it.name, it.unit, parseNum(it.qty), parseNum(it.price), parseNum(it.amount), it.note]
-    ),
-    [],
-    ['소계', '', '', '', '', '', document.getElementById('subTotal')?.textContent || ''],
-    ['절사금액', '', '', '', '', '', document.getElementById('discountVal')?.textContent || ''],
-    ['부가가치세', '', '', '', '', '', document.getElementById('vatVal')?.textContent || ''],
-    ['견적금액(공급가액+세액)', '', '', '', '', '', document.getElementById('totalVal')?.textContent || ''],
-    [],
-    ['비고'],
-    [saved.memo],
-    [],
-    ['결제정보', saved.bankInfo, '', '지불조건', saved.payCondition],
-    ['견적유효기간', saved.validity],
+  // 품목 데이터 (Row 13~)
+  let curRow = 13;
+  const startDataRow = curRow;
+  saved.items.forEach((it, i) => {
+    const r = sheet.getRow(curRow + i);
+    if (isB) {
+      r.values = [it.no, it.name, it.spec, it.unit, parseNum(it.qty), parseNum(it.price), parseNum(it.amount), it.note];
+    } else {
+      r.values = [it.no, it.name, it.unit, parseNum(it.qty), parseNum(it.price), parseNum(it.amount), it.note];
+    }
+    r.eachCell((c, colIdx) => {
+      c.border = borderStyle;
+      if (colIdx === 5 || colIdx === 6 || (isB && colIdx === 7)) {
+        c.alignment = rightAlign;
+        c.numFmt = '#,##0';
+      } else {
+        c.alignment = centerAlign;
+      }
+    });
+  });
+  curRow += saved.items.length;
+  const endDataRow = curRow - 1;
+
+  // 하단 요약 (소계, 절사, 부가세, 합계)
+  const summaryRows = [
+    ['소계', '', '', '', '', '', document.getElementById('subTotal')?.textContent.replace(/,/g,'')*1 || 0],
+    ['절사금액', '', '', '', '', '', document.getElementById('discountVal')?.textContent.replace(/,/g,'')*1 || 0],
+    ['부가가치세', '', '', '', '', '', document.getElementById('vatVal')?.textContent.replace(/,/g,'')*1 || 0],
+    ['견적금액', '', '', '', '', '', document.getElementById('totalVal')?.textContent.replace(/,/g,'')*1 || 0]
   ];
 
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = isB
-    ? [{wch:6},{wch:20},{wch:12},{wch:6},{wch:6},{wch:14},{wch:14},{wch:12}]
-    : [{wch:6},{wch:22},{wch:6},{wch:8},{wch:14},{wch:14},{wch:12}];
+  summaryRows.forEach((row, i) => {
+    const rIdx = curRow + i;
+    sheet.getRow(rIdx).values = row;
+    sheet.mergeCells(rIdx, 1, rIdx, colCount - 2);
+    const lbl = sheet.getCell(rIdx, 1);
+    lbl.alignment = centerAlign; lbl.border = borderStyle; lbl.fill = headerFill;
+    const val = sheet.getCell(rIdx, colCount - 1);
+    val.alignment = rightAlign; val.border = borderStyle; val.numFmt = '#,##0';
+    if (i === 3) val.font = { bold: true, color: {argb: 'FFD32F2F'} };
+    sheet.getCell(rIdx, colCount).border = borderStyle; // 비고칸
+  });
+  curRow += 4;
 
-  XLSX.utils.book_append_sheet(wb, ws, '견적서');
+  // 비고 (Memo)
+  curRow++;
+  sheet.mergeCells(curRow, 1, curRow, colCount);
+  const memoLbl = sheet.getCell(curRow, 1);
+  memoLbl.value = '비고'; memoLbl.fill = headerFill; memoLbl.font = { bold: true }; memoLbl.border = borderStyle;
+  curRow++;
+  sheet.mergeCells(curRow, 1, curRow + 2, colCount);
+  const memoVal = sheet.getCell(curRow, 1);
+  memoVal.value = saved.memo;
+  memoVal.alignment = { vertical: 'top', wrapText: true };
+  memoVal.border = borderStyle;
+  curRow += 4;
 
-  const coName = currentCompany === 'baron' ? '바론컨설턴트' : '장헌기술단';
-  const today = new Date().toISOString().slice(0,10);
-  XLSX.writeFile(wb, `견적서_${coName}_${today}.xlsx`);
+  // 하단 고정 정보
+  sheet.getRow(curRow).values = ['결제정보', saved.bankInfo, '', '', '지불조건', saved.payCondition];
+  sheet.mergeCells(curRow, 2, curRow, 4);
+  sheet.mergeCells(curRow, 6, curRow, colCount);
+  sheet.getRow(curRow+1).values = ['견적유효기간', saved.validity];
+  sheet.mergeCells(curRow+1, 2, curRow+1, colCount);
+  
+  [curRow, curRow+1].forEach(rIdx => {
+    sheet.getCell(rIdx, 1).font = { bold: true };
+    if (rIdx === curRow) sheet.getCell(rIdx, 5).font = { bold: true };
+  });
+
+  // ── 2. 기술용역형 상세 시트 ────────────────
+  if (isB) {
+    const sheetL = workbook.addWorksheet('인건비산출');
+    sheetL.columns = [{width:20},{width:12},{width:15},{width:15},{width:18},{width:20}];
+    sheetL.mergeCells(1,1,1,6);
+    const tL = sheetL.getCell(1,1); tL.value = '직접인건비 산출근거'; tL.font = {size:16, bold:true}; tL.alignment = centerAlign;
+    
+    const lHeader = ['구분', '인원(명)', '참여기간(개월)', '단가', '실행금액(원)', '비고'];
+    sheetL.getRow(3).values = lHeader;
+    sheetL.getRow(3).eachCell(c => { c.fill = headerFill; c.font = {bold:true}; c.border = borderStyle; c.alignment = centerAlign; });
+
+    saved.items.forEach((it, i) => {
+      const r = sheetL.getRow(4+i);
+      r.values = [it.name, parseNum(it.qty), parseNum(it.month), parseNum(it.price), parseNum(it.amount), it.note];
+      r.eachCell((c, ci) => { 
+        c.border = borderStyle; 
+        if(ci >= 2 && ci <= 5) { c.alignment = rightAlign; c.numFmt = '#,##0'; }
+        else { c.alignment = centerAlign; }
+      });
+    });
+
+    // 경비 시트도 유사하게 스타일링... (생략하거나 핵심만 구현)
+  }
+
+  // 저장
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `견적서_${coName}_${today}.xlsx`;
+  link.click();
 }
 
 // ═══════════════════════════════════════════════
-//  견적번호 관리 (localStorage)
+//  견적번호 관리 (Google Sheets 공유)
 // ═══════════════════════════════════════════════
-function getQuoteNo() {
+async function fetchSharedQuoteNo() {
   const y = new Date().getFullYear();
   const m = String(new Date().getMonth()+1).padStart(2,'0');
   const key = `quoteSeq_${y}${m}`;
-  const seq = parseInt(localStorage.getItem(key) || '0');
-  return { key, seq, str: `${y}-${m}-${String(seq+1).padStart(4,'0')}` };
+  
+  try {
+    const response = await fetch(`${GS_URL}?action=read`);
+    const data = await response.json();
+    _serverSeq = parseInt(data.seq || 0);
+    // 성공 시 로컬에도 저장
+    localStorage.setItem(key, _serverSeq);
+    return _serverSeq;
+  } catch (e) {
+    console.error("서버 번호 로드 실패, 로컬 저장소 사용:", e);
+    _serverSeq = parseInt(localStorage.getItem(key) || '0');
+    return _serverSeq;
+  }
 }
-function incrementQuoteNo() {
-  const { key, seq } = getQuoteNo();
-  localStorage.setItem(key, seq + 1);
+
+function getQuoteNo() {
+  const y = new Date().getFullYear();
+  const m = String(new Date().getMonth()+1).padStart(2,'0');
+  const seq = _serverSeq !== null ? _serverSeq : 0;
+  
+  // 표시할 번호는 (마지막 발행 번호 + 1)
+  return { 
+    seq, 
+    str: `${y}-${m}-${String(seq + 1).padStart(4,'0')}` 
+  };
 }
+
+async function incrementQuoteNo() {
+  const y = new Date().getFullYear();
+  const m = String(new Date().getMonth()+1).padStart(2,'0');
+  const key = `quoteSeq_${y}${m}`;
+
+  try {
+    const projectName = document.getElementById('projectName')?.value || "";
+    const clientName = document.getElementById('clientName')?.value || "";
+    
+    const params = new URLSearchParams({
+      action: 'increment',
+      title: projectName,
+      client: clientName
+    });
+
+    const response = await fetch(`${GS_URL}?${params.toString()}`, { method: 'GET' });
+    const data = await response.json();
+    _serverSeq = parseInt(data.seq);
+    
+    // 성공 시 로컬 업데이트
+    localStorage.setItem(key, _serverSeq);
+    return _serverSeq;
+  } catch (e) {
+    console.error("서버 번호 증가 실패:", e);
+    // 실패 시 로컬에서라도 증가 (최후의 수단)
+    _serverSeq = (_serverSeq || parseInt(localStorage.getItem(key) || '0')) + 1;
+    localStorage.setItem(key, _serverSeq);
+    return _serverSeq;
+  }
+}
+
 // 현재 세션의 임시 번호 (PDF 출력 전까지는 미확정)
 let _currentQuoteNo = null;
 function getDisplayNo() {
@@ -1730,4 +2174,27 @@ function syncAppliedToTop() {
 // ═══════════════════════════════════════════════
 //  초기 실행
 // ═══════════════════════════════════════════════
-render();
+render(); 
+
+fetchSharedQuoteNo().then(() => {
+  _currentQuoteNo = null; 
+  const noStr = getDisplayNo();
+  const noEl = document.getElementById('displayNo');
+  if (noEl) noEl.textContent = noStr;
+});
+
+// ── 내보내기 메뉴 토글 ────────────────
+let _isExporting = false; 
+
+function toggleExportMenu(e) {
+  if (_isExporting) return; 
+  e.stopPropagation();
+  const dropdown = document.querySelector('.dropdown');
+  if (dropdown) dropdown.classList.toggle('active');
+}
+
+window.addEventListener('click', () => {
+  if (_isExporting) return; 
+  const dropdown = document.querySelector('.dropdown');
+  if (dropdown) dropdown.classList.remove('active');
+});

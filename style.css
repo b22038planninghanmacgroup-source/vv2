@@ -72,6 +72,121 @@
   }
   .toolbar-right { display: flex; align-items: center; gap: 6px; }
 
+  /* 툴바 액션 아이콘 버튼 그룹 */
+  .toolbar-actions {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+  .icon-btn {
+    background: #1a1a1a;
+    border: 1px solid #2e2e2e;
+    color: #666;
+    width: 32px;
+    height: 32px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0;
+  }
+  .icon-btn:hover {
+    background: #2e2e2e;
+    border-color: #444;
+    color: #fff;
+  }
+
+  /* 드롭다운 내보내기 */
+  .dropdown {
+    position: relative;
+    display: inline-block;
+  }
+  .btn-export {
+    background: #1a1a1a;
+    color: #ccc;
+    border-color: #2e2e2e;
+  }
+  .btn-export:hover {
+    background: #2e2e2e;
+    color: #fff;
+  }
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 5px);
+    background-color: #1a1a1a;
+    min-width: 160px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    z-index: 3000;
+    border-radius: 6px;
+    border: 1px solid #2e2e2e;
+    overflow: hidden;
+  }
+  .dropdown.active .dropdown-content {
+    display: block;
+    animation: fadeIn 0.2s;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .dropdown-content button {
+    width: 100%;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    color: #aaa;
+    text-align: left;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 11.5px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+  }
+  .dropdown-content button:hover {
+    background-color: #2e2e2e;
+    color: #fff;
+  }
+  .dropdown-content button svg {
+    flex-shrink: 0;
+  }
+
+  /* 툴팁 */
+  [data-tooltip] {
+    position: relative;
+  }
+  [data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: -32px;
+    right: 0;
+    background: rgba(30, 30, 30, 0.95);
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 10.5px;
+    font-weight: 400;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    pointer-events: none;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  [data-tooltip]:hover::after {
+    opacity: 1;
+    visibility: visible;
+    bottom: -38px;
+  }
+
   /* 법인 드롭다운 */
   .toolbar-select {
     padding: 6px 28px 6px 12px;
@@ -153,6 +268,11 @@
     background: #1d6f42;
     color: #fff;
     border-color: #175a35;
+  }
+  .btn-db {
+    background: #34495e;
+    color: #fff;
+    border-color: #2c3e50;
   }
   /* 구분선 */
   .toolbar-sep {
@@ -291,6 +411,7 @@
   .summary-row { background: #f9f9f9; }
   .summary-row .row-name { font-weight: 700 !important; color: #333 !important; }
   .summary-row .row-amount { font-weight: 700 !important; color: #d32f2f !important; }
+  .summary-row .row-amount input { font-weight: 700 !important; color: #d32f2f !important; }
   .summary-row .row-note { font-size: 11px !important; color: #666 !important; }
   
   .row-no { text-align: center !important; font-weight: 500; color: #888; }
@@ -343,29 +464,8 @@
   /* ── 편집용 인풋 하이라이트 ── */
   input:focus, textarea:focus { background: #f0f4ff !important; }
   .nav-cell:focus { background: #e8f0ff !important; outline: 1px solid var(--accent); outline-offset: -1px; }
-  @media print {
-    .toolbar, #floatRowBtns, .no-print { display: none !important; }
-    body { background: white; margin: 0; padding: 0; }
-    .main { width: 210mm !important; margin: 0 auto !important; padding: 0 !important; }
-    .doc-wrapper { margin-left: 0 !important; width: 210mm !important; }
-    .doc-page {
-      box-shadow: none !important;
-      margin: 0 !important;
-      padding: 12mm 14mm 14mm !important;
-      width: 210mm !important;
-      height: 297mm !important;
-      overflow: hidden !important;
-      page-break-after: always;
-    }
-    .doc-page:last-child { page-break-after: auto !important; }
-    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-    .supplier-tbl .lbl, .supplier-tbl .vert { background-color: #f0ede8 !important; }
-    .item-tbl th, .item-tbl .total-row td { background-color: #f0ede8 !important; }
-    .footer-2row .fl { background-color: #f0ede8 !important; }
-    input, textarea { border: none !important; outline: none !important; background: transparent !important; box-shadow: none !important; -webkit-appearance: none; }
-    #clientName { border-bottom: 2px solid #1a1814 !important; }
-    .page-num { display: block !important; }
-  }
+
+  /* ── 행 버튼 ── */
   .row-btn {
     padding: 5px 14px; font-size: 12px; font-weight: 700;
     border: 1.5px solid var(--border); border-radius: 4px;
@@ -377,7 +477,7 @@
   .row-btn.del { color: var(--red); border-color: var(--red); }
 
   /* 플로팅 행 버튼 패널 */
-  #floatRowBtns, #floatExpBtns {
+  #floatRowBtns, #floatExpBtns, #floatSWBtns {
     position: absolute;
     display: flex;
     flex-direction: column;
@@ -386,7 +486,7 @@
     left: 0;
     width: 70px;
   }
-  #floatRowBtns .row-btn, #floatExpBtns .row-btn {
+  #floatRowBtns .row-btn, #floatExpBtns .row-btn, #floatSWBtns .row-btn {
     writing-mode: horizontal-tb;
     white-space: nowrap;
     font-size: 11px;
@@ -396,10 +496,10 @@
     background: #fff;
     width: 100%;
     text-align: center;
+    border: 1.2px solid #ddd;
+    cursor: pointer;
   }
-  @media print { #floatRowBtns, #floatExpBtns { display: none !important; } }
 
-  /* 인쇄용 숨김 */
   /* ── A4 페이지 레이아웃 ── */
   .doc-page {
     box-shadow: 0 2px 16px rgba(0,0,0,.12);
@@ -425,7 +525,6 @@
     color: var(--text-sub);
     pointer-events: none;
   }
-
 
   /* 비고 textarea 자동 높이 */
   .auto-textarea {
@@ -455,6 +554,7 @@
     line-height: 1.5;
     word-break: keep-all;
   }
+
   /* Breakdown Page Styles */
   .section-title-box {
     font-size: 14.5px;
@@ -466,7 +566,7 @@
     display: flex;
     align-items: center;
     background: transparent;
-    border-bottom: 1px solid #ddd; /* Softer line for separation */
+    border-bottom: 1px solid #ddd;
   }
   .section-badge {
     background: #1b4d3e;
@@ -483,7 +583,7 @@
     font-weight: 800 !important;
   }
   .final-total-row {
-    background: #f0ede8 !important; /* Beige color to match theme */
+    background: #f0ede8 !important;
   }
   .section-title {
     font-size: 14px;
@@ -498,7 +598,7 @@
     background: transparent !important;
     font-size: 14px;
     font-weight: 700;
-    color: #d32f2f !important; /* Red for amount */
+    color: #d32f2f !important;
     text-align: right;
     width: 90px;
     outline: none;
@@ -540,7 +640,6 @@
   }
   .breakdown-table input { font-family: 'Noto Sans KR', sans-serif !important; font-size: 11px !important; }
   
-  /* 페이지 2 (세부내역) 전용: 일반 표 행 높이 고정 */
   #page2_labor .item-tbl tr { height: 32px !important; }
   #page2_labor .item-tbl.applied-table tr { height: 25px !important; }
   #page2_labor .item-tbl td, #page2_labor .item-tbl th {
@@ -549,7 +648,7 @@
     padding: 4px 8px !important;
   }
 
-  /* 인건비 산출근거(Section 8) 전용: 행 높이 극한 최소화 (12.5px) */
+  /* 인건비 산출근거(Section 8) 전용: 행 높이 최소화 */
   #basisBody tr, #basisBody + tr { height: 12.5px !important; }
   #basisBody td, #basisBody th, #basisBody input, .basis-avg, #basisBody + tr td {
     padding: 0px 4px !important;
@@ -571,7 +670,6 @@
     line-height: 12.5px !important;
   }
   
-  /* 비고란: 1줄일 때는 12.5px 유지, 내용 많을 때만 자동 확장 */
   #basisBody .basis-note {
     width: 90px !important;
     font-size: 8.5px !important;
@@ -601,6 +699,7 @@
     text-align: center;
     white-space: nowrap;
     color: var(--text-sub);
+    width: 72px;
   }
   .supplier-tbl .vert {
     background: #f0ede8;
@@ -620,7 +719,7 @@
     border: 1px solid var(--border);
   }
 
-  /* 하단 정보 2행 */
+  /* 하단 정보 2행 (결제정보, 지불조건 등) */
   .footer-2row { border-collapse: collapse; width: 100%; margin-top: 14px; }
   .footer-2row td {
     border: 1px solid var(--border);
@@ -628,14 +727,20 @@
     font-size: 11.5px;
     vertical-align: middle;
   }
-  .footer-2row .fl { font-weight: 700; color: var(--text-sub); white-space: nowrap; background: #f0ede8; width: 70px; }
+  .footer-2row .fl {
+    background: #f0ede8;
+    font-weight: 700;
+    text-align: center;
+    width: 80px;
+    white-space: nowrap;
+    color: var(--text-sub);
+  }
 
   @media print {
-    .toolbar, .row-controls, .no-print { display: none !important; }
+    .toolbar, #floatRowBtns, #floatExpBtns, #floatSWBtns, .no-print { display: none !important; }
     body { background: white; margin: 0; padding: 0; }
-    .main { margin: 0; padding: 0; max-width: 100%; }
-
-    /* A4 페이지 설정 */
+    .main { width: 210mm !important; margin: 0 auto !important; padding: 0 !important; }
+    .doc-wrapper { margin-left: 0 !important; width: 210mm !important; }
     .doc-page {
       box-shadow: none !important;
       border: none !important;
@@ -665,29 +770,20 @@
     .info-tbl .lbl      { background-color: #f0ede8 !important; }
     .info-tbl .lbl-vert { background-color: #f0ede8 !important; }
 
-    /* 입력창 인쇄 시 깔끔하게 */
-    input {
+    /* 입력창 인쇄 시 투명화 */
+    input, textarea {
       border: none !important;
-      border-bottom: none !important;
       outline: none !important;
       background: transparent !important;
+      box-shadow: none !important;
       -webkit-appearance: none;
-      box-shadow: none !important;
     }
-    textarea {
-      border: none !important;
-      outline: none !important;
-      background: transparent !important;
-      box-shadow: none !important;
-      resize: none;
-    }
-    /* 회사명 밑줄만 인쇄 */
     #clientName {
       border-bottom: 2px solid #1a1814 !important;
     }
     .page-num { display: block !important; }
 
-    /* 절사 규칙 드롭다운 인쇄 스타일: 박스 제거하고 텍스트만 표시 */
+    /* 절사 규칙 드롭다운 인쇄 스타일 */
     .print-as-text {
       border: none !important;
       background: transparent !important;
@@ -696,55 +792,65 @@
       padding: 0 !important;
       color: inherit !important;
     }
+
+    /* 인쇄 시 모든 placeholder 숨김 */
+    ::placeholder { color: transparent !important; opacity: 0 !important; }
+    ::-webkit-input-placeholder { color: transparent !important; opacity: 0 !important; }
+    :-moz-placeholder { color: transparent !important; opacity: 0 !important; }
+    ::-moz-placeholder { color: transparent !important; opacity: 0 !important; }
+    :-ms-input-placeholder { color: transparent !important; opacity: 0 !important; }
   }
-/* 사업명 placeholder 스타일 */
-#projectName::placeholder {
-  color: #b3b3b3 !important; /* 더 흐린 회색 */
-  font-weight: 400 !important;
-}
 
-/* 협력사명 placeholder 스타일 */
-#clientName::placeholder {
-  color: #b3b3b3 !important;
-  font-weight: 400 !important;
-}
+  /* Placeholder Style */
+  #projectName::placeholder, #clientName::placeholder, #memoField::placeholder, .auto-textarea::placeholder {
+    color: #b3b3b3 !important;
+    font-weight: 400 !important;
+  }
 
-/* 입력칸 힌트 배경 (인쇄시 숨김) */
-.hint-bg {
-  background-color: #f4f4f4 !important;
-  border-radius: 3px;
-  transition: background-color 0.2s;
-}
-.hint-bg:focus {
-  background-color: #e8e8e8 !important;
-}
-
-/* 비고란 placeholder 스타일 */
-#memoField::placeholder, .auto-textarea::placeholder {
-  color: #b3b3b3 !important; /* 흐릿한 회색 */
-  font-weight: 400 !important;
-}
-
-.auto-textarea {
-  width: 100%;
-  border: 1px solid var(--border);
-  padding: 10px 12px;
-  font-family: inherit;
-  font-size: 12.5px;
-  line-height: 1.6;
-  resize: none;
-  outline: none;
-  background: #fff;
-  min-height: 100px;
-  overflow: hidden;
-}
-
-@media print {
+  /* 입력칸 힌트 배경 */
   .hint-bg {
-    background-color: transparent !important;
+    background-color: #f4f4f4 !important;
+    border-radius: 3px;
+    transition: background-color 0.2s;
   }
-  /* 인쇄 시 모든 placeholder 숨김 */
-  ::placeholder {
-    color: transparent !important;
+  .hint-bg:focus {
+    background-color: #e8e8e8 !important;
   }
+
+  /* SW 페이지 토글 버튼 */
+  .sw-toggle-btns {
+    display: flex;
+    background: #f0f0f0;
+    padding: 2px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+  }
+  .btn-sw-opt {
+    border: none;
+    background: none;
+    padding: 3px 12px;
+    font-family: inherit;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #999;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.2s;
+  }
+  .btn-sw-opt.active {
+    background: #fff;
+    color: #333;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .btn-sw-opt:hover:not(.active) {
+    color: #666;
+  }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.spin {
+  display: inline-block;
+  animation: spin 1s linear infinite;
 }
